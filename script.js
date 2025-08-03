@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle chat form submission
     if (chatForm) {
-        chatForm.addEventListener('submit', function(e) {
+        chatForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const message = chatInput.value.trim();
             if (message) {
@@ -190,11 +190,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show typing indicator
                 showTypingIndicator();
                 
-                // Simulate AI response (replace with actual DeepSeek API call)
-                setTimeout(() => {
+                try {
+                    // Call DeepSeek API
+                    const aiResponse = await generateAIResponse(message);
                     hideTypingIndicator();
-                    addAIMessage(generateAIResponse(message));
-                }, 1500);
+                    addAIMessage(aiResponse);
+                } catch (error) {
+                    console.error('Error getting AI response:', error);
+                    hideTypingIndicator();
+                    addAIMessage('Sorry, I\'m having trouble connecting right now. Please try again in a moment.');
+                }
             }
         });
     }
@@ -283,27 +288,85 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
-    // Generate AI response (replace with actual DeepSeek API)
-    function generateAIResponse(userMessage) {
-        const responses = {
-            'hello': 'Hello! How can I help you with web development, coding, or design today?',
-            'help': 'I can help you with web development, coding, design, and technical questions. What would you like to know?',
-            'web development': 'I can assist you with HTML, CSS, JavaScript, responsive design, and modern web development practices. What specific area would you like to explore?',
-            'css': 'CSS is great for styling! I can help with layouts, animations, responsive design, and modern CSS techniques like Grid and Flexbox.',
-            'javascript': 'JavaScript is powerful for web interactivity! I can help with DOM manipulation, events, async programming, and modern JS features.',
-            'responsive': 'Responsive design is crucial! I can help with mobile-first approaches, media queries, flexible layouts, and testing across devices.',
-            'readwithme': 'ReadWithMe platform development! I can help with reading applications, user experience design, and digital reading features.',
-            'default': 'That\'s an interesting question! I\'m here to help with web development, coding, design, and technical topics. Could you tell me more about what you\'re working on?'
-        };
-
-        const lowerMessage = userMessage.toLowerCase();
-        
-        for (const [key, response] of Object.entries(responses)) {
-            if (lowerMessage.includes(key)) {
-                return response;
-            }
+    // DeepSeek API integration
+    let conversationHistory = [
+        {
+            role: "system",
+            content: "You are DeepSeek AI, a helpful assistant specializing in web development, coding, design, and technical topics. You provide clear, practical advice and code examples when appropriate. Keep responses concise but informative."
         }
-        
-        return responses.default;
+    ];
+
+    // Call DeepSeek API
+    async function callDeepSeekAPI(userMessage) {
+        try {
+            // Add user message to conversation history
+            conversationHistory.push({
+                role: "user",
+                content: userMessage
+            });
+
+            const response = await fetch(DEEPSEEK_CONFIG.API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DEEPSEEK_CONFIG.API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: DEEPSEEK_CONFIG.MODEL,
+                    messages: conversationHistory,
+                    ...DEEPSEEK_CONFIG.DEFAULT_PARAMS
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+                const aiResponse = data.choices[0].message.content;
+                
+                // Add AI response to conversation history
+                conversationHistory.push({
+                    role: "assistant",
+                    content: aiResponse
+                });
+
+                return aiResponse;
+            } else {
+                throw new Error('Invalid response format from DeepSeek API');
+            }
+
+        } catch (error) {
+            console.error('DeepSeek API Error:', error);
+            
+            // Fallback responses if API fails
+            const fallbackResponses = {
+                'hello': 'Hello! How can I help you with web development, coding, or design today?',
+                'help': 'I can help you with web development, coding, design, and technical questions. What would you like to know?',
+                'web development': 'I can assist you with HTML, CSS, JavaScript, responsive design, and modern web development practices. What specific area would you like to explore?',
+                'css': 'CSS is great for styling! I can help with layouts, animations, responsive design, and modern CSS techniques like Grid and Flexbox.',
+                'javascript': 'JavaScript is powerful for web interactivity! I can help with DOM manipulation, events, async programming, and modern JS features.',
+                'responsive': 'Responsive design is crucial! I can help with mobile-first approaches, media queries, flexible layouts, and testing across devices.',
+                'readwithme': 'ReadWithMe platform development! I can help with reading applications, user experience design, and digital reading features.',
+                'default': 'I\'m experiencing a temporary connection issue. I can help you with web development, coding, design, and technical topics. Could you tell me more about what you\'re working on?'
+            };
+
+            const lowerMessage = userMessage.toLowerCase();
+            
+            for (const [key, response] of Object.entries(fallbackResponses)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+            
+            return fallbackResponses.default;
+        }
+    }
+
+    // Generate AI response using DeepSeek API
+    async function generateAIResponse(userMessage) {
+        return await callDeepSeekAPI(userMessage);
     }
 });
