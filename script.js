@@ -65,4 +65,70 @@ document.addEventListener('DOMContentLoaded', function() {
             mobileMenuToggle.setAttribute('aria-expanded', 'false');
         }
     });
+
+    // Search functionality
+    const searchToggle = document.getElementById('search-toggle');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchClose = document.getElementById('search-close');
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    const suggestionTags = document.querySelectorAll('.suggestion-tag');
+
+    // Open search overlay
+    if (searchToggle) {
+        searchToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            searchOverlay.classList.add('active');
+            searchOverlay.setAttribute('aria-hidden', 'false');
+            searchToggle.setAttribute('aria-expanded', 'true');
+            searchInput.focus();
+        });
+    }
+
+    // Close search overlay
+    if (searchClose) {
+        searchClose.addEventListener('click', function() {
+            searchOverlay.classList.remove('active');
+            searchOverlay.setAttribute('aria-hidden', 'true');
+            searchToggle.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    // Close search overlay when clicking outside
+    searchOverlay.addEventListener('click', function(e) {
+        if (e.target === searchOverlay) {
+            searchOverlay.classList.remove('active');
+            searchOverlay.setAttribute('aria-hidden', 'true');
+            searchToggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Close search overlay with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+            searchOverlay.classList.remove('active');
+            searchOverlay.setAttribute('aria-hidden', 'true');
+            searchToggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Handle suggestion tags
+    suggestionTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            const searchTerm = this.getAttribute('data-search');
+            searchInput.value = searchTerm;
+            searchForm.submit();
+        });
+    });
+
+    // Handle search form submission
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            const query = searchInput.value.trim();
+            if (query) {
+                // The form will automatically submit to Bing
+                // No need to prevent default or handle manually
+            }
+        });
+    }
 });
