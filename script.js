@@ -131,4 +131,179 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // DeepSeek AI Chat functionality
+    const deepseekToggle = document.getElementById('deepseek-toggle');
+    const deepseekOverlay = document.getElementById('deepseek-overlay');
+    const deepseekClose = document.getElementById('deepseek-close');
+    const chatInput = document.getElementById('chat-input');
+    const chatForm = document.getElementById('chat-form');
+    const chatMessages = document.getElementById('chat-messages');
+
+    // Open DeepSeek chat overlay
+    if (deepseekToggle) {
+        deepseekToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            deepseekOverlay.classList.add('active');
+            deepseekOverlay.setAttribute('aria-hidden', 'false');
+            deepseekToggle.setAttribute('aria-expanded', 'true');
+            chatInput.focus();
+        });
+    }
+
+    // Close DeepSeek chat overlay
+    if (deepseekClose) {
+        deepseekClose.addEventListener('click', function() {
+            deepseekOverlay.classList.remove('active');
+            deepseekOverlay.setAttribute('aria-hidden', 'true');
+            deepseekToggle.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    // Close DeepSeek chat overlay when clicking outside
+    deepseekOverlay.addEventListener('click', function(e) {
+        if (e.target === deepseekOverlay) {
+            deepseekOverlay.classList.remove('active');
+            deepseekOverlay.setAttribute('aria-hidden', 'true');
+            deepseekToggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Close DeepSeek chat overlay with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && deepseekOverlay.classList.contains('active')) {
+            deepseekOverlay.classList.remove('active');
+            deepseekOverlay.setAttribute('aria-hidden', 'true');
+            deepseekToggle.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Handle chat form submission
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (message) {
+                addUserMessage(message);
+                chatInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Simulate AI response (replace with actual DeepSeek API call)
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    addAIMessage(generateAIResponse(message));
+                }, 1500);
+            }
+        });
+    }
+
+    // Add user message to chat
+    function addUserMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message user-message';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+            <div class="message-content">
+                <p>${escapeHtml(message)}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Add AI message to chat
+    function addAIMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ai-message';
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+            </div>
+            <div class="message-content">
+                <p>${escapeHtml(message)}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Show typing indicator
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message ai-message typing-indicator';
+        typingDiv.id = 'typing-indicator';
+        typingDiv.innerHTML = `
+            <div class="message-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                </svg>
+            </div>
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        `;
+        chatMessages.appendChild(typingDiv);
+        scrollToBottom();
+    }
+
+    // Hide typing indicator
+    function hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    // Scroll to bottom of chat
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Generate AI response (replace with actual DeepSeek API)
+    function generateAIResponse(userMessage) {
+        const responses = {
+            'hello': 'Hello! How can I help you with web development, coding, or design today?',
+            'help': 'I can help you with web development, coding, design, and technical questions. What would you like to know?',
+            'web development': 'I can assist you with HTML, CSS, JavaScript, responsive design, and modern web development practices. What specific area would you like to explore?',
+            'css': 'CSS is great for styling! I can help with layouts, animations, responsive design, and modern CSS techniques like Grid and Flexbox.',
+            'javascript': 'JavaScript is powerful for web interactivity! I can help with DOM manipulation, events, async programming, and modern JS features.',
+            'responsive': 'Responsive design is crucial! I can help with mobile-first approaches, media queries, flexible layouts, and testing across devices.',
+            'readwithme': 'ReadWithMe platform development! I can help with reading applications, user experience design, and digital reading features.',
+            'default': 'That\'s an interesting question! I\'m here to help with web development, coding, design, and technical topics. Could you tell me more about what you\'re working on?'
+        };
+
+        const lowerMessage = userMessage.toLowerCase();
+        
+        for (const [key, response] of Object.entries(responses)) {
+            if (lowerMessage.includes(key)) {
+                return response;
+            }
+        }
+        
+        return responses.default;
+    }
 });
